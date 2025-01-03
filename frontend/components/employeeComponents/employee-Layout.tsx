@@ -1,4 +1,4 @@
-"use client"; //cause Im using useState, i need to import use Client. Making this page React
+"use client"; // Needed for `useState`
 import { useState } from "react";
 import Sidebar from "../Sidebar";
 import Navbar from "../Navbar";
@@ -16,15 +16,16 @@ interface EmpLayoutProps {
 }
 
 export default function EmpLayout(layoutProps: EmpLayoutProps) {
-  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false); // true represents collapsed sidebar. false represents expanded sidebar
+  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-
+  // Function to toggle the sidebar state
   function toggleSidebar() {
-    setSidebarCollapsed(!isSidebarCollapsed);
+    setSidebarCollapsed((prev) => !prev);
   }
+
   const pathname = usePathname();
   console.log("pathname is ...", pathname);
-  
+
   // Map the current route to EmployeePages
   const pathToPageMap = {
     "/Employee/Projects": EmployeePages.PROJECTS,
@@ -36,15 +37,20 @@ export default function EmpLayout(layoutProps: EmpLayoutProps) {
   const activePage = pathToPageMap[pathname as keyof typeof pathToPageMap];
 
   return (
-    <div className="">
+    <div className="flex flex-col h-screen">
+      {/* Navbar */}
       <Navbar
         initials={
-          layoutProps.firstName.charAt(0) + "" + layoutProps.lastName.charAt(0)
+          layoutProps.firstName.charAt(0) + layoutProps.lastName.charAt(0)
         }
-        name={layoutProps.firstName + " " + layoutProps.lastName}
+        name={`${layoutProps.firstName} ${layoutProps.lastName}`}
         signOutButton={layoutProps.signOutFunc}
+        collapsed={isSidebarCollapsed} // Pass collapsed state
+        toggleSidebar={toggleSidebar} // Pass toggle function
       />
-      <div className="flex">
+
+      <div className="flex flex-1">
+        {/* Sidebar */}
         <Sidebar
           userRole={layoutProps.userRole}
           collapsed={isSidebarCollapsed}
@@ -53,17 +59,20 @@ export default function EmpLayout(layoutProps: EmpLayoutProps) {
           employeeLevel={layoutProps.employeeLevel}
         />
 
-        {/**Main Content */}
+        {/* Main Content */}
         <main
-          className={`bg-[#413F46] flex-1 p-4 transition-all duration-200 ease-in-out main-content rounded-3xl  ml-4 mr-4 ${isSidebarCollapsed ? "ml-0" : "ml-200px"}`}
+          className={`bg-popover flex-1 p-4 transition-all duration-200 ease-in-out rounded-3xl ml-4 mr-4`}
         >
-      <div className="flex items-center gap-4 m">
-        {pathname !== "/Employee/Projects" && pathname !== "/Employee/Training" && pathname !== "/Employee/SponsoredProjects" && (
-          <BackButton>← Back</BackButton>
-        )}
-        {/* Subheading */}
-        
-      </div>
+          {/* Back Button */}
+          <div className="flex items-center gap-4 mb-4">
+            {pathname !== "/Employee/Projects" &&
+              pathname !== "/Employee/Training" &&
+              pathname !== "/Employee/SponsoredProjects" && (
+                <BackButton>← Back</BackButton>
+              )}
+          </div>
+
+          {/* Page Content */}
           {layoutProps.children}
         </main>
       </div>
