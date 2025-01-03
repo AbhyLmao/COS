@@ -22,7 +22,7 @@ export default async function RootLayout({children,}: {children: React.ReactNode
     if(!employeeInfo || empError){
       return <UnauthorizedPage />;
     }
-    const [firstName, lastName] = employeeInfo.full_name.split(" ");
+    const [firstName, lastName] = employeeInfo.full_name ? employeeInfo.full_name.split(" ") : ["N/A", "N/A"];
 
     return (
         <div>

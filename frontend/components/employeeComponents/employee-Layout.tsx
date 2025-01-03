@@ -23,7 +23,7 @@ export default function EmpLayout(layoutProps: EmpLayoutProps) {
     setSidebarCollapsed(!isSidebarCollapsed);
   }
   const pathname = usePathname();
-  console.log("pathname is ...", pathname);
+  // console.log("pathname is ...", pathname);
   
   // Map the current route to EmployeePages
   const pathToPageMap = {

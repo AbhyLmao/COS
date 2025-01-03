@@ -1,20 +1,23 @@
 import { ProjectsList } from "@/components/employeeComponents/ProjectList";
 import Headingbar from "@/components/employeeComponents/Headingbar";
+import {createClient} from '@/utils/supabase/server';
+import { Project } from "@/utils/types";
 
-async function getProject() {
-  
+async function getProject():Promise<Project[] | null> {
+  const supabase = await createClient();
+  const {data: projectInfo , error} = await supabase.from("Projects").select("*"); 
+  return error ? null : projectInfo as Project[];
 }
 
 export default async function projectpage(){
-  // cosnt allProjects = await getProject();
+  const allProjects:  Project[] | null = await getProject();
+  
     return (
-      // <ProjectsList initialProjects={allProjects}/>
       <>
       <Headingbar
         text='Projects'
       />
-      {/* <h2> This is the project page</h2> */}
-      <ProjectsList />
+      <ProjectsList initialProjects={allProjects}/>
       </>
     );
 }

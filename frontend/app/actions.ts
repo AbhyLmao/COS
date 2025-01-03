@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { UserRole } from "@/utils/types";
 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
@@ -26,7 +27,8 @@ export const signUpAction = async (formData: FormData) => {
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
       data: {
-        full_name: "example name",
+        user_role: UserRole.EMPLOYEE,
+        full_name: "fake name",
         level: 2,
       }
     },
