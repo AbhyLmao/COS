@@ -61,7 +61,7 @@ export default function EmpLayout(layoutProps: EmpLayoutProps) {
 
         {/* Main Content */}
         <main
-          className={`bg-popover flex-1 p-4 transition-all duration-200 ease-in-out rounded-3xl ml-4 mr-4`}
+          className={`bg-jet flex-1 p-4 transition-all duration-200 ease-in-out rounded-3xl ml-4 mr-4`}
         >
           {/* Back Button */}
           <div className="flex items-center gap-4 mb-4">

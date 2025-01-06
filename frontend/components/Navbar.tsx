@@ -29,7 +29,7 @@ export default function Navbar({
   });
 
   return (
-    <nav className="w-full flex justify-center border-b-foreground/10 h-16">
+    <nav className="w-full flex justify-center h-16">
       <div className="w-full max-w-8xl flex justify-between items-center px-6 text-sm text-white">
         <div className="flex items-center gap-6">
           <button
@@ -79,21 +79,18 @@ export default function Navbar({
           <button
             className="w-10 h-10 rounded-full flex items-center justify-center shadow-md"
             style={{ backgroundColor: "#81c26c", color: "white" }}
-            onClick={() => setMenuOpen(!isMenuOpen)}
+            onClick={() => setMenuOpen(true)}
           >
             {initials}
           </button>
 
-          {isMenuOpen && (
-            <div className="fixed top-0 right-0">
-              <SideMenu
-                initials={initials}
-                onClose={() => setMenuOpen(false)}
-                signOutButton={signOutButton}
-                name={name}
-              />
-            </div>
-          )}
+          <SideMenu
+            initials={initials}
+            onClose={() => setMenuOpen(false)}
+            signOutButton={signOutButton}
+            name={name}
+            isOpen={isMenuOpen} // Pass visibility control
+          />
         </div>
       </div>
     </nav>

@@ -23,7 +23,7 @@ export default function Sidebar({ userRole, collapsed, activePage, employeeLevel
 
   return (
     <div
-      className={`bg-gray-800 text-white h-full overflow-hidden transition-all duration-300 ${
+      className={` text-white h-full overflow-hidden transition-all duration-300 ${
         collapsed ? "w-0" : "w-64"
       }`}
     >
