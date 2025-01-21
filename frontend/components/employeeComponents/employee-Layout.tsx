@@ -38,18 +38,19 @@ export default function EmpLayout(layoutProps: EmpLayoutProps) {
 
   return (
     <div className="">
-      <Navbar
+       <Navbar
         initials={
-          layoutProps.firstName.charAt(0) + "" + layoutProps.lastName.charAt(0)
+          layoutProps.firstName.charAt(0) + layoutProps.lastName.charAt(0)
         }
         name={layoutProps.firstName + " " + layoutProps.lastName}
         signOutButton={layoutProps.signOutFunc}
+        toggleSidebar={toggleSidebar} // Pass the toggleSidebar function
+        collapsed={isSidebarCollapsed} // Pass the collapsed state
       />
-      <div className="flex">
+      <div className="flex flex-1">
         <Sidebar
           userRole={layoutProps.userRole}
           collapsed={isSidebarCollapsed}
-          toggleSidebar={toggleSidebar}
           activePage={activePage}
           employeeLevel={layoutProps.employeeLevel}
         />
