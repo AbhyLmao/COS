@@ -36,11 +36,11 @@ export default function Navbar({ initials, signOutButton, name }: NavbarProperit
 
         <div className="relative flex items-center gap-6 -ml-20">
 
-          <ThemeSwitcher/>
+          {/* <ThemeSwitcher/> */}
 
           <span className="text-white">{currentDate}</span>
 
-          <button
+          {/* <button
             className="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-gray-600 relative"
             aria-label="Notifications"
             onClick={() => alert("The notification feature is being developed (maybe)")}
@@ -55,7 +55,7 @@ export default function Navbar({ initials, signOutButton, name }: NavbarProperit
             </svg>
             
             <span className="absolute top-0.5 right-1 block w-2.5 h-2.5 rounded-full"style={{ backgroundColor: "#E75973" }}></span>
-          </button>
+          </button> */}
           
           <button
             className="w-10 h-10 rounded-full flex items-center justify-center shadow-md"

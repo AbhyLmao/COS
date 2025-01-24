@@ -1,9 +1,40 @@
+"use client"
+
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
+
 interface UserInfoProps {
-    email: string;
-    level: string | null;
+    userId: string
   }
 
-const UserInfo = ({ email, level }: UserInfoProps) => {
+export default function UserInfo ({ userId }: UserInfoProps) {
+    const [email, setEmail] = useState(""); 
+    const [level, setLevel] = useState(null);
+    const [department, setDepartment] = useState(null);
+
+    const supabase = createClient();
+
+    useEffect(() => {
+        // This will fetch data when the component mounts
+        const fetchUserData = async () => {
+            const { data: userInfo, error: userError } = await supabase
+                .from("Employees")
+                .select("email, level, department")
+                .eq("employee_id", userId)  // match userid with the employee id
+                .single(); // only 1 record returned
+
+            if (userError) {
+                console.error("error getting user data:", userError);
+            } else {
+                setEmail(userInfo.email);
+                setLevel(userInfo.level);
+                setDepartment(userInfo.department);
+            }
+        };
+
+        fetchUserData(); 
+      }, [userId]);
+
     return (
         <div>
             <div className="p-4 text-white">
@@ -15,7 +46,7 @@ const UserInfo = ({ email, level }: UserInfoProps) => {
                     </p>
                     <p className="mb-1">
                         <span className="font-medium">Department: </span>
-                        <span className="text-gray-400"> Placeholder Department</span>
+                        <span className="text-gray-400"> {department}</span>
                         {/* db needs department */}
                     </p>
                     <p className="mb-1">
@@ -28,5 +59,4 @@ const UserInfo = ({ email, level }: UserInfoProps) => {
     );
 }
 
-export default UserInfo
 
