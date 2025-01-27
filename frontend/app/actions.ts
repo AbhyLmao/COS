@@ -5,31 +5,85 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { UserRole } from "@/utils/types";
+import { UserRole, EmployeeLevel } from "@/utils/types";
 
+/**
+ * Sign up a user as an employee
+ * @param formData Data from the sign up form
+ * @returns A redirect to the sign up page with an error message if the sign up fails, 
+ * or a redirect to the sign up page with a success message if the sign up is successful.
+ * Afterwards if confirmation is enabled in supabase, the user will receive an email to confirm their email.
+ */
 export const signUpAction = async (formData: FormData) => {
-  const email = formData.get("email")?.toString();
-  const password = formData.get("password")?.toString();
-  const supabase = await createClient();
-  const origin = (await headers()).get("origin");
-
-  if (!email || !password) {
-    return encodedRedirect(
-      "error",
-      "/sign-up",
-      "Email and password are required",
-    );
+  let first_name = formData.get("first_name")?.toString();
+  let last_name = formData.get("last_name")?.toString();
+  let email = formData.get("email")?.toString();
+  let password = formData.get("password")?.toString();
+  let title = formData.get("title")?.toString();
+  let department = formData.get("department")?.toString();
+  console.log("user sign up data",{
+    first_name,
+    last_name,
+    email,
+    password,
+    department,
+  });
+  const emailRegex = /^[^\s@]+@ttg\.com$/i;
+  
+  if (!first_name || first_name.trim().length ==0) {
+    return encodedRedirect("error", "/sign-up", "First name is required");
+  }
+  if (!last_name || last_name.trim().length ==0) {
+    return encodedRedirect("error", "/sign-up", "Last name is required");
+  }
+  if (!email || email.trim().length ==0 || !emailRegex.test(email)) {
+    return encodedRedirect("error", "/sign-up", "Tartigrade Email is required");
+  }
+  if (!password) {
+    return encodedRedirect("error", "/sign-up", "Password is required");
+  }
+  if (!title){
+    return encodedRedirect("error", "/sign-up", "Title is required");
+  }
+  if (!department){
+    return encodedRedirect("error", "/sign-up", "Department is required");
   }
 
+  first_name = first_name.trim();
+  last_name = last_name.trim();
+  title = title.trim();
+  const supabase = await createClient();
+  
+  // check if the ttg email belongs to a student
+  const { data: studentData, error: studentError } = await supabase
+    .from("Students")
+    .select('full_name, email, ttg_email')
+    .or(`email.eq.${email},ttg_email.eq.${email}`);
+    // response is a array of objects studentData: [{name:"",email: "", ttg_email:  ""}, ...]
+
+
+  if (studentError) {
+    console.error(studentError.message);
+    return encodedRedirect("error", "/sign-up", `Error checking student email: ${studentError.message}`);
+  }
+
+  if (studentData && studentData.length > 0) {
+    return encodedRedirect("error", "/sign-up", "Students cannot sign up as employees");
+  }
+
+  const full_name = `${first_name.charAt(0).toUpperCase() + first_name.slice(1)} ${last_name.charAt(0).toUpperCase() + last_name.slice(1)}`;
+  const origin = (await headers()).get("origin");
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/confirm`,
       data: {
         user_role: UserRole.EMPLOYEE,
-        full_name: "fake name",
-        level: 2,
+        full_name,
+        department: department,
+        title: title,
+        level: EmployeeLevel.LEVEL_0,
       }
     },
   });

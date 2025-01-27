@@ -7,7 +7,7 @@ export interface Employee{
     password: string;
     full_name: string;
     level: number;
-    Employee_id: string;
+    employee_id: string;
     title: string;
     department: string;
 }
@@ -19,6 +19,7 @@ export interface Student{
     major: string;
     github?: string;
     team_id: string;
+    ttg_email: string;
 }
 
 export enum EmployeeLevel {

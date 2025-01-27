@@ -1,0 +1,41 @@
+/* To override the default browser styling when it autofill password and email */
+
+.signup-page input:-webkit-autofill,
+.signup-page input:-webkit-autofill:hover,
+.signup-page input:-webkit-autofill:focus,
+.signup-page input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #1e1e2f inset !important;
+  border: 1px solid #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: #ffffff;
+}
+
+/* Styles for PasswordInput */
+.signup-page .password-input input:-webkit-autofill,
+.signup-page .password-input input:-webkit-autofill:hover,
+.signup-page .password-input input:-webkit-autofill:focus,
+.signup-page .password-input input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #1e1e2f inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: #ffffff;
+}
+
+/* Ensure text color is white for both regular inputs and PasswordInput */
+.signup-page input,
+.signup-page .password-input input {
+  color: #ffffff !important;
+}
+
+/* Maintain consistent background color for inputs */
+.signup-page input,
+.signup-page .password-input input {
+  background-color: #1e1e2f !important;
+}
+
+/* Style for input placeholders */
+.signup-page input::placeholder,
+.signup-page .password-input input::placeholder {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
