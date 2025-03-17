@@ -77,7 +77,10 @@ const handleProjectStatusChange = (
   user_level: number
 ) => {
   if (
-    currentProjectInfo.status === Project_Status.DISPATCHED
+    // currentProjectInfo.status === Project_Status.DISPATCHED
+    currentProjectInfo.status === Project_Status.APPROVED &&
+    (originalProjectInfo.status === Project_Status.REVIEW ||
+      originalProjectInfo.status === Project_Status.REJECTED)
   ) {
     if (
       !checkApproverInfo(
