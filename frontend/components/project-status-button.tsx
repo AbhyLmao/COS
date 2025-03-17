@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ProjectStatusOrder } from "@/app/student_applications/project_detail_helper";
-import { Project_Status } from "@/utils/types";
+import { Project_Status, Universities } from "@/utils/types";
 import { cn } from "@/lib/utils";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight } from "lucide-react";
@@ -15,6 +15,8 @@ interface ProjectStatusButtonProp {
   status: Project_Status;
   setProjStatus: (new_status: Project_Status) => void;
   allowClick: boolean;
+  projectSponsor: string | null;
+  dispatchUniversity: Universities | null;
 }
 
 const statusConfig: Record<Project_Status, { color: string }> = {
@@ -31,20 +33,25 @@ const statusConfig: Record<Project_Status, { color: string }> = {
 };
 const checkStatusSelectable = (
   initial_status: Project_Status,
-  targetStatus: Project_Status
+  targetStatus: Project_Status,
+  projectSponsor: string | null,
+  dispatchUniversity: Universities | null
 ): boolean => {
   const initialIndex = ProjectStatusOrder.indexOf(initial_status);
   const targetIndex = ProjectStatusOrder.indexOf(targetStatus);
 
-  // the status  in front is selectable
-  if (targetIndex === initialIndex + 1) return true;
+
+  // the status  in front is selectable only if the initial is not Rejected
+  if (targetIndex === initialIndex + 1 && initial_status !==  Project_Status.REJECTED) return true;
   if (initialIndex === targetIndex) return true; // if the user want to set the status to original status, allow them to
+
   if (
     initial_status === Project_Status.REVIEW &&
     (targetStatus === Project_Status.REJECTED ||
       targetStatus === Project_Status.APPROVED)
   )
     return true;
+  
   if (
     initial_status === Project_Status.APPROVED &&
     targetStatus === Project_Status.REJECTED
@@ -52,31 +59,63 @@ const checkStatusSelectable = (
     return true;
   }
 
-  // if rejected, you can set it back to review
+  if (initial_status === Project_Status.REJECTED && targetStatus === Project_Status.REVIEW) 
+    return true;
+
+  // NEW CONDITION: Prevent moving from APPROVED → DISPATCHED if no sponsor or university
   if (
     initial_status === Project_Status.REJECTED &&
     targetStatus === Project_Status.REVIEW
   )
-    true;
+    return true;
   return false;
 };
 
-function getNextStatus(currentStatus: Project_Status): Project_Status {
+function getNextStatus(
+  currentStatus: Project_Status,
+  projectSponsor: string | null,
+  dispatchUniversity: Universities | null
+): Project_Status {
   const currentStatusIndex = ProjectStatusOrder.indexOf(currentStatus);
-  return currentStatusIndex < ProjectStatusOrder.length - 1
-    ? ProjectStatusOrder[currentStatusIndex + 1]
-    : currentStatus;
+  const nextStatus =
+    currentStatusIndex < ProjectStatusOrder.length - 1
+      ? ProjectStatusOrder[currentStatusIndex + 1]
+      : currentStatus;
+
+  if (
+    currentStatus === Project_Status.APPROVED &&
+    nextStatus === Project_Status.DISPATCHED &&
+    (!projectSponsor || !dispatchUniversity)
+  ) {
+    if (!projectSponsor && !dispatchUniversity) {
+      alert("You cannot dispatch this project. It does not have a university to dispatch to and it does not have a sponsor.")
+      return currentStatus;
+    }
+    else if (!projectSponsor) {
+      alert("You cannot dispatch this project. It does not have a sponsor.")
+      return currentStatus;
+    }
+    else if (!dispatchUniversity) {
+      alert("You cannot dispatch this project. It does not have a university to dispatch to.")
+      return currentStatus;
+    }
+  }
+
+  return nextStatus;
 }
+
 export function ProjectStatusButton({
   initial_status,
   status,
   setProjStatus,
   allowClick,
+  projectSponsor,
+  dispatchUniversity,
 }: ProjectStatusButtonProp) {
   const currentConfig = statusConfig[status];
+
   function handleStatusChange(target_status: Project_Status) {
     if (target_status !== status) {
-      // if the current status is not the status that was clicked, then call function
       setProjStatus(target_status);
     }
   }
@@ -87,11 +126,12 @@ export function ProjectStatusButton({
       : "border-white text-white";
 
   const handleNextStatus = () => {
-    const nextStatus = getNextStatus(status);
-    if (checkStatusSelectable(initial_status, nextStatus)) {
+    const nextStatus = getNextStatus(status, projectSponsor, dispatchUniversity);
+    if (checkStatusSelectable(initial_status, nextStatus, projectSponsor, dispatchUniversity)) {
       setProjStatus(nextStatus);
     }
   };
+
   return (
     <div className="flex">
       <DropdownMenu>
@@ -113,7 +153,9 @@ export function ProjectStatusButton({
           {ProjectStatusOrder.map((statusKey) => {
             const isSelectable = checkStatusSelectable(
               initial_status,
-              statusKey
+              statusKey,
+              projectSponsor,
+              dispatchUniversity
             );
             return (
               <DropdownMenuItem

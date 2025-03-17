@@ -120,10 +120,15 @@ export function ProjectsList({
   const sortedProjects = [...projects].sort((a, b) => {
     const valueA = a[sortColumn];
     const valueB = b[sortColumn];
-
-    if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
-    if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
-    return 0;
+  
+    const isEmptyA = valueA === null || valueA === "";
+    const isEmptyB = valueB === null || valueB === "";
+  
+    if (isEmptyA && isEmptyB) return 0;
+    if (isEmptyA) return sortOrder === "asc" ? -1 : 1;
+    if (isEmptyB) return sortOrder === "asc" ? 1 : -1;
+    
+    return valueA < valueB ? (sortOrder === "asc" ? -1 : 1) : (sortOrder === "asc" ? 1 : -1);
   });
 
   const filteredProjects = sortedProjects.filter((project) => {

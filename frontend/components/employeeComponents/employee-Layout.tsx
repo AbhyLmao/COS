@@ -47,7 +47,7 @@ export default function EmpLayout(layoutProps: EmpLayoutProps) {
         toggleSidebar={toggleSidebar} // Pass the toggleSidebar function
         collapsed={isSidebarCollapsed} // Pass the collapsed state
       />
-      <div className="flex flex-1">
+      <div className="flex flex-1 pb-4">
         <Sidebar
           userRole={layoutProps.userRole}
           collapsed={isSidebarCollapsed}

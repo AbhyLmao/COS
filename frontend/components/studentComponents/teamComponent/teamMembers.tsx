@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, MinusCircle, Crown, FileText, Upload } from "lucide-react";
 import { Student, Team } from "@/utils/types";
-import { handleCreateStudentAccounts, modifiedStudents, loadTeamData, handleUpdateStudentInformation, handleNdaUpload, openNDA } from "./teamMemberHelper";
+import { handleCreateStudentAccounts, modifiedStudents, loadTeamData, handleUpdateStudentInformation, handleNdaUpload, openNDA, handleUpdateLead } from "./teamMemberHelper";
 import dynamic from "next/dynamic";
 import { ConfirmationDialog, ConfirmationDialogProp } from "@/components/confirmationPopup";
 import { AlertDialog } from "@/components/ui/alert-dialog";
@@ -40,6 +40,8 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
   const [newStudents, setNewStudents] = useState<Partial<Student>[]>([]); // tracks new students
   const [deleteStudents, setDeleteStudents] = useState<Partial<Student>[]>([]); // tracks deleted students
   const [localTeamName, setLocalTeamName] = useState<string>(teamName);
+  const [initialLead, setInitialLead] = useState<string>(originalTeamInfo.team_lead_email || "");
+  const [localLead, setLocalLead] = useState<string>(originalTeamInfo.team_lead_email || "");
 
   // UI states
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -68,6 +70,7 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
       const updatedStudents = await loadTeamData(originalTeamInfo.team_id!);
       setStudents(updatedStudents);
       setInitialStudents(updatedStudents); //Store a copy of the original data
+      setInitialLead(originalTeamInfo.team_lead_email||"");
     } catch (error) {
       console.error("Error fetching team data:", error);
       addNotification("error", "Failed to load team data");
@@ -86,8 +89,8 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
 
   // memoizes a calculated value, preventing recalculation unless dependencies change:
   const hasChanges = useMemo(() => {
-    return JSON.stringify(initialStudents) !== JSON.stringify(students) || newStudents.length > 0 || deleteStudents.length > 0 || teamName !== localTeamName || ndaFile !== null;
-  }, [initialStudents, students, newStudents, deleteStudents, teamName, localTeamName, ndaFile]);
+    return JSON.stringify(initialStudents) !== JSON.stringify(students) || newStudents.length > 0 || deleteStudents.length > 0 || teamName !== localTeamName || ndaFile !== null || initialLead !== localLead;
+  }, [initialStudents, students, newStudents, deleteStudents, teamName, localTeamName, ndaFile, initialLead, localLead]);
 
 
   // State reset functions
@@ -99,6 +102,7 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
     setIsEditing(false);
     setIsSaving(false);
     setCurrentOperation("none");
+    setLocalLead(originalTeamInfo.team_lead_email || "");
   };
 
   //memoize function. If didn't dependencies changed, returns the previously stored function, else create a new function
@@ -179,6 +183,7 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
     // process operations in sequence
     await processTeamNameChange();
     await processStudentUpdates();
+    await processLeadUpdates();
 
     // Handle new and deleted students last as they require confirmations
     if (newStudents.length > 0) {
@@ -243,6 +248,20 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
       await resetAllStates();
     }
   };
+
+  const processLeadUpdates = async () => {
+    if (originalTeamInfo.team_lead_email === localLead) return;
+    try {
+      const updateResults = await handleUpdateLead(localLead, originalTeamInfo.team_id||"")
+      if (updateResults.type === "error") {
+        await resetAllStates();
+      }
+      addNotification(updateResults.type as "error" | "warning" | "success" | "partial-success", updateResults.text);
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      addNotification("error", "An error occurred while updating team lead.");
+      await resetAllStates();
+  }};
 
   /**
    * After save is clicked, if the user is attempting to add a new student, open a confirmation popup
@@ -361,6 +380,9 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
     setIsSaving(false);
     setIsEditing(false);
   };
+  const assignLead = ( new_email:string ) => {
+    setLocalLead(new_email);
+  };
 
   if (initialLoading) {
     return (
@@ -435,7 +457,7 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
               </div>
               {/* <div className="max-h-96 space-y-4 overflow-y-auto pr-4"> */}
 
-              {students.map((stu, index) => (
+              {students.sort((a, b) => (a.email === initialLead ? -1 : b.email === initialLead ? 1 : 0)).map((stu, index) => (
                 <Card key={index}>
                   <CardContent className="pt-6">
                     <div className="grid gap-2">
@@ -443,7 +465,7 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
                         {!isEditing ? (
                           <h4 className="font-medium flex flex-1 items-center">
                             {stu.full_name}
-                            {originalTeamInfo.team_lead_email === stu.email && <Crown className="ml-2 text-yellow-500" size={18} />}
+                            {localLead === stu.email && <Crown className="ml-2 text-yellow-500" size={18} />}
                           </h4>
                         ) : (
                           <div className="flex items-center">
@@ -458,7 +480,18 @@ export default function TeamMembers({ userInfo, originalTeamInfo, setTeamNameOnS
                               }}
                               placeholder="Full Name"
                             />
-                            {originalTeamInfo.team_lead_email === stu.email && <Crown className="ml-2 text-yellow-500" size={18} />}
+                            {localLead === stu.email && <Crown className="ml-2 text-yellow-500" size={18} />}
+                            {localLead != stu.email &&
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => assignLead(stu.email||"")}
+                              className="ml-4"
+                            >
+                              {<Crown size={18} />}
+                              <p className="ml-2">Assign Lead</p>
+                            </Button>}
                           </div>
                         )}
                         {isEditing && originalTeamInfo.team_lead_email !== stu.email && (

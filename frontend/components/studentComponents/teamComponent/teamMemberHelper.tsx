@@ -157,6 +157,33 @@ export const handleUpdateStudentInformation = async (students: Partial<Student>[
   }
 };
 
+export const handleUpdateLead = async (new_lead: string, team_id: string): Promise<ResponseMessage> => {
+  let message: JSX.Element[] = [];
+  const { error } = await supabase
+    .from("Teams")
+    .update({
+      team_lead_email: new_lead
+    })
+    .eq("team_id", team_id);
+
+    if (error) {
+      console.log("Failed to assign new team lead", error.message);
+      message.push(
+        <p key="error" className="text-red-600">
+          Failed to assign new team lead, <span className="font-bold">{new_lead}</span>. Please contact the project sponsor.
+        </p>
+      );
+      return { type: "error", text: message };
+    }
+    message.push(
+      <p key="success" className="text-green-600">
+        New team lead assigned successfully.
+      </p>
+    );
+    
+    return { type: "success", text: message };
+};
+
 /**
  * Update or set the team nda file name
  * upload nda

@@ -86,6 +86,8 @@ export default function StudentProjectDetail({
               onInputChange({ target: { name: "status", value: status } })
             }
             allowClick={false}
+            projectSponsor={originalProjectInfo.sponsor_email}
+            dispatchUniversity={originalProjectInfo.university}
           />
         </div>
       </div>
@@ -99,7 +101,7 @@ export default function StudentProjectDetail({
       </div>
 
       {/* Budget and Start Term */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-white my-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 text-white my-4">
         {/* Budget */}
         <div className="space-y-2 w-full">
           <label htmlFor="budget">Budget</label>
@@ -118,7 +120,7 @@ export default function StudentProjectDetail({
         </div>
 
         {/* Start Term */}
-        <div className=" relative flex flex-col space-y-2 w-[50%]">
+        <div className=" relative flex flex-col space-y-2">
           <label className="text-base capitalize">Start Term</label>
           <div>
             <input

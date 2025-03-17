@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: 'Helvetica-Bold',
     marginBottom: 8,
   },
   text: {
@@ -47,6 +47,45 @@ const styles = StyleSheet.create({
   },
 });
 
+const convertMDtoPlain = (markdown) => {
+  const lines = markdown.split("\n");
+
+  return lines.map((line, index) => {
+    let textStyle = { fontSize: 12, marginBottom: 6 }; // Default text style
+    let content = line.trim(); // Trim spaces but keep empty lines
+
+    if (content.startsWith("### ")) {
+      textStyle = { fontSize: 14, fontFamily: "Helvetica-Bold", marginBottom: 8 };
+      content = content.replace(/^### /, "");
+    } else if (content.startsWith("## ")) {
+      textStyle = { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 10 };
+      content = content.replace(/^## /, "");
+    } else if (content.startsWith("# ")) {
+      textStyle = { fontSize: 18, fontFamily: "Helvetica-Bold", marginBottom: 12 };
+      content = content.replace(/^# /, "");
+    }
+
+    // Handle **bold** text inside lines
+    const parts = content.split(/\*\*(.*?)\*\*/g);
+
+    return (
+      <Text key={index} style={textStyle}>
+        {parts.map((part, i) =>
+          i % 2 === 1 ? (
+            <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>
+              {part}
+            </Text>
+          ) : (
+            part
+          )
+        )}
+      </Text>
+    );
+  });
+};
+
+
+
 const MyDocument = ({ project }) => (
   <Document>
     <Page size="A4" style={styles.page}>
@@ -57,7 +96,7 @@ const MyDocument = ({ project }) => (
       <View style={styles.section}>
         <Text style={styles.text}>Project ID: {project.project_id}</Text>
         <Text style={styles.text}>Sponsor: {project.sponsor_email}</Text>
-        <Text style={styles.text}>{project.description}</Text>
+        <View style={styles.section}>{convertMDtoPlain(project.description)}</View>
       </View>
     </Page>
   </Document>

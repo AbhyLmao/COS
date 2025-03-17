@@ -49,7 +49,6 @@ type Members = {
   full_name: string;
   role: string;
   email: string;
-  resume: string;
   ttg: string;
 };
 
@@ -59,6 +58,8 @@ type Team = {
   members: Members[];
   supervisor_name: string;
   supervisor_email: string;
+  nda: string;
+  team_lead: string;
 }
 
 export function SponsoredList({ searchTerm, filter }: { searchTerm: string; filter: string;}) {
@@ -110,10 +111,21 @@ export function SponsoredList({ searchTerm, filter }: { searchTerm: string; filt
         console.log('Got user email: ', userEmail);
 
         const { data, error } = await supabase
-            .from('Projects')
-            .select('project_id, title, Applications!Projects_awarded_application_id_fkey(team_name, members), status, github, google_link, university')
-            .eq('sponsor_email', userEmail);
-  
+        .from('Projects')
+        .select(`
+          project_id, 
+          title, 
+          status, 
+          github, 
+          google_link, 
+          university, 
+          Teams!Projects_awarded_team_id_fkey(
+            team_name, 
+            Students(team_id, full_name, role, email, ttg:ttg_email)
+          )
+        `)
+        .eq('sponsor_email', userEmail);
+
         if (error) {
             console.error('Error fetching projects:', error);
         } else if (data) {
@@ -122,14 +134,20 @@ export function SponsoredList({ searchTerm, filter }: { searchTerm: string; filt
               data.map((project) => ({
                 id: project.project_id,
                 name: project.title,
-                team: (project.Applications as unknown as { team_name: string } | null)?.team_name ?? '**Project Not Awarded**',
+                team: (project.Teams as unknown as { team_name: string } | null)?.team_name ?? '**Project Not Awarded**',
                 status: project.status,
                 drive: project.google_link,
                 git: project.github,
-                members: (project.Applications as unknown as { members: Members[] | null})?.members ?? [],
+                members: (project.Teams as unknown as { Students: Members[]} | null)?.Students?.map((student: { full_name: any; role: any; email: any; ttg: any }) => ({
+                  full_name: student.full_name,
+                  role: student.role,
+                  email: student.email,
+                  ttg: student.ttg,
+                })) ?? [],                
                 university: project.university,
               }))
-        );
+            ); 
+            console.log("PROJECTS: ", projects)       
       }
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -183,15 +201,17 @@ export function SponsoredList({ searchTerm, filter }: { searchTerm: string; filt
         }
 
         const { data: teamsData, error: teamsError } = await supabase
-          .from('Applications')
+          .from('Teams')
           .select(`
             team_name,
-            university,
-            members,
-            Teams(supervisor_name, supervisor_email)
+            supervisor_name,
+            supervisor_email,
+            Students(full_name, role, email, ttg_email),
+            Projects!Teams_project_id_fkey(university),
+            nda_file,
+            team_lead_email
           `)
           .eq('project_id', projectId)
-          .eq('status', 'APPROVED')
           .single();
             
         if (!teamsData) {
@@ -204,19 +224,21 @@ export function SponsoredList({ searchTerm, filter }: { searchTerm: string; filt
           return;
         } else if (teamsData) {
           console.log("Teams data: ", teamsData)
-          const members = teamsData.members || [];
+          const members = teamsData.Students || [];
           const memberDetails = members.map((member: any) => ({
             full_name: member.full_name,
             role: member.role,
             email: member.email,
-            resume: member.resume,
+            ttg: member.ttg_email,
       }));
           setTeams({
             team_name: teamsData.team_name,
-            university: teamsData.university,
+            university: (teamsData.Projects as unknown as { university: string } | null)?.university ?? 'N/A',
             members: memberDetails,
-            supervisor_name: teamsData?.Teams?.[0]?.supervisor_name ?? "N/A",
-            supervisor_email: teamsData?.Teams?.[0]?.supervisor_email ?? "N/A",
+            supervisor_name: teamsData.supervisor_name ?? "N/A",
+            supervisor_email: teamsData.supervisor_email ?? "N/A",
+            nda: teamsData.nda_file,
+            team_lead: teamsData.team_lead_email
           });
         }
     } catch (err) {
@@ -249,6 +271,7 @@ export function SponsoredList({ searchTerm, filter }: { searchTerm: string; filt
   });
 
   const filteredProjects = sortedProjects.filter((project) => {
+    // console.log("test: ", project)
     const matchesNullUni = selectedUniversity.includes("Not Dispatched") && !project.university;
     const matchesUni = selectedUniversity.length === 0 || selectedUniversity.includes(project.university) || matchesNullUni;
     const matchesStatus = selectedStatus.length === 0 || selectedStatus.includes(project.status);
@@ -349,7 +372,7 @@ export function SponsoredList({ searchTerm, filter }: { searchTerm: string; filt
     await fetchTitle(projectId);
     await fetchTeams(projectId);
     setMenuOpen(true); // Open the menu
-    console.log('fetched team: ', teams);
+    // console.log('fetched team: ', teams);
   };
 
   function handleSelectStatus(option: Project_Status){

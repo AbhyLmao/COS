@@ -4,16 +4,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/utils/supabase/client";
+import { Crown, FileText } from "lucide-react";
+import { openNDA } from "@/components/studentComponents/teamComponent/teamMemberHelper";
 
 type Members = {
   full_name: string;
   role: string;
   email: string;
-  resume: string;
   ttg: string;
 };
 
@@ -23,6 +21,8 @@ type Team = {
   members: Members[];
   supervisor_name: string;
   supervisor_email: string;
+  nda: string;
+  team_lead: string;
 };
 
 interface TeamMenuProps {
@@ -31,23 +31,10 @@ interface TeamMenuProps {
   title: string;
 }
 
-async function openResume(resume_filepath: string) {
-  const supabase = createClient();
-  const { data, error } = await supabase.storage
-    .from("applicants_resumes")
-    .createSignedUrl(resume_filepath, 600); // Link valid for 10 mins
-
-  if (data?.signedUrl) {
-    window.open(data.signedUrl, "_blank");
-  } else {
-    alert("Unable to fetch the resume. Please try again.");
-  }
-}
-
 const TeamMenu: React.FC<TeamMenuProps> = ({ onClose, teamsData, title }) => {
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-900 text-white rounded-lg shadow-lg max-w-[450px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="bg-gray-900 text-white rounded-lg shadow-lg max-w-[450px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
         </DialogHeader>
@@ -57,11 +44,15 @@ const TeamMenu: React.FC<TeamMenuProps> = ({ onClose, teamsData, title }) => {
             <>
               <div className='flex flex-col'>
                 <span className="text-gray-400">Team Name: </span>
-                <span>{teamsData.team_name}</span>
+                <div className="flex flex-col bg-gray-800 p-2 rounded-md">
+                  <span>{teamsData.team_name}</span>
+                </div>
               </div>
               <div className='flex flex-col'>
                 <span className="text-gray-400">University: </span>
-                <span>{teamsData.university}</span>
+                <div className="flex flex-col bg-gray-800 p-2 rounded-md">
+                  <span>{teamsData.university}</span>
+                </div>
               </div>
               <div className='flex flex-col'>
                 <span className="text-gray-400">Supervisor: </span>
@@ -85,43 +76,63 @@ const TeamMenu: React.FC<TeamMenuProps> = ({ onClose, teamsData, title }) => {
                   <span className="text-gray-400">Members:</span>
                 </div>
                 <div className={`space-y-2 ${teamsData.members.length > 2 ? "max-h-48 overflow-y-scroll scrollbar" : ""}`}>
-                  {teamsData.members.map((member, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col bg-gray-800 p-2 rounded-md"
-                    >
-                      <div className='flex items-center justify-between'>
-                      <div>
-                        <p>{member.full_name}</p>
-                        {/* <p className="text-sm text-gray-400">{member.role}</p> */}
-                      </div>
-                      {/* <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openResume(member.resume)}
+                  {teamsData.members
+                    .sort((a, b) => (a.email === teamsData.team_lead ? -1 : b.email === teamsData.team_lead ? 1 : 0)) // Move team lead to the top
+                    .map((member, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col bg-gray-800 p-2 rounded-md"
                       >
-                        View Resume
-                      </Button> */}
+                        <div className='flex items-center justify-between'>
+                          <div className='flex'>
+                            <p>{member.full_name}</p>
+                            <p>{teamsData.team_lead === member.email && <Crown className="ml-2 text-yellow-500" size={18} />}</p>
+                          </div>
+                        </div>
+                        <div className='flex'>
+                          <p className='text-sm text-gray-400'>Email:&nbsp;</p>
+                          <p className='text-sm'> {member.email}</p>
+                        </div>
+                        <div className='flex'>
+                          <p className='text-sm text-gray-400'>TTG:&nbsp;</p>
+                          <p className='text-sm'>{member.ttg ? member.ttg : "N/A"}</p>
+                        </div>
                       </div>
-                      <div className='flex'>
-                        <p className='text-sm text-gray-400'>Email:&nbsp;</p>
-                        <p className='text-sm'> {member.email}</p>
-                      </div>
-                      <div className='flex'>
-                        <p className='text-sm text-gray-400'>TTG:&nbsp;</p>
-                        <p className='text-sm'>**TTG Email Will Go Here**</p>
+                    ))}
+                  <div></div>
+                </div>
+              </div>
+              <div className='flex flex-col'>
+                <span className="text-gray-400">NDA: </span>
+                  <div
+                    className="flex flex-col bg-gray-800 p-2 rounded-md"
+                  >
+                    <div className='flex'>
+                      <div>
+                        {teamsData.nda ? (
+                        <div
+                          className="cursor-pointer flex items-center text-blue-400 hover:text-blue-300"
+                          onClick={() => {
+                            if (teamsData.nda) openNDA(teamsData.nda);
+                            console.log("Should open link")
+                          }}
+                        >
+                          <FileText className="mr-2" size={18} />
+                          <span>View NDA</span>
+                        </div>) : (
+                          <div
+                          className="cursor-default flex items-center"
+                        >
+                          <FileText className="mr-2" size={18} />
+                          <span>No NDA</span>
+                        </div>
+                        )}
                       </div>
                     </div>
-                  ))}
-                  <div>
                   </div>
-                </div>
               </div>
             </>
           ) : (
-            // <div>
-            //   <span>No team details available as the project has not been awarded at this time.</span>
-            // </div>
             <>
               <div className='flex flex-col'>
                 <span className="text-gray-400">Team Name: </span>
@@ -132,33 +143,38 @@ const TeamMenu: React.FC<TeamMenuProps> = ({ onClose, teamsData, title }) => {
                 <span>N/A</span>
               </div>
               <div className='flex flex-col'>
-                <span className="text-gray-400">Team detail: </span>
-                <span className="max-h-32 overflow-y-auto scrollbar bg-gray-800 rounded-md p-2">No team details are available as the project has not yet been awarded at this time</span>
+                <span className="text-gray-400">Supervisor: </span>
+                  <div
+                    className="flex flex-col bg-gray-800 p-2 rounded-md"
+                  >
+                    <div className='flex items-center justify-between'>
+                    <div className='flex'>
+                      <p>Name:&nbsp;</p>
+                      <p>N/A</p>
+                    </div>
+                    </div>
+                    <div className='flex'>
+                      <p className='text-sm text-gray-400'>Email:&nbsp;</p>
+                      <p className='text-sm'>N/A</p>
+                    </div>
+                  </div>
               </div>
               <div>
                 <div>
                   <span className="text-gray-400">Members:</span>
                 </div>
-                <div className={`space-y-2 "max-h-48 overflow-y-scroll scrollbar" : ""}`}>
+                <div>
                     <div
                       className="flex flex-col bg-gray-800 p-2 rounded-md"
                     >
                       <div className='flex items-center justify-between'>
                       <div>
                         <p>No team assigned</p>
-                        <p className="text-sm text-gray-400">N/A</p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled
-                      >
-                        View Resume
-                      </Button>
                       </div>
                       <div className='flex'>
                         <p className='text-sm text-gray-400'>Email:&nbsp;</p>
-                        <p className='text-sm'>N/A</p>
+                        <p className='text-sm'> N/A</p>
                       </div>
                       <div className='flex'>
                         <p className='text-sm text-gray-400'>TTG:&nbsp;</p>
